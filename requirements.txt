@@ -1,0 +1,6 @@
+fastapi==0.89.1
+pyngrok==5.2.1
+python-dotenv==0.21.1
+python-multipart==0.0.5
+twilio==7.16.2
+uvicorn==0.20.0
