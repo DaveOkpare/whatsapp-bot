@@ -12,9 +12,9 @@ def send_message():
     client = Client(account_sid, auth_token)
 
     message = client.messages.create(
-        from_='whatsapp:+14155238886',
+        from_=f'whatsapp:{os.environ["FROM_WHATSAPP"]}',
         body='That is good my guy',
-        to='whatsapp:+2347015593286',
+        to=f'whatsapp:{os.environ["TO_WHATSAPP"]}',
         media_url=["https://demo.twilio.com/owl.png"]
     )
 
@@ -24,5 +24,5 @@ def send_message():
 
 if __name__ == '__main__':
     import requests
-    response = requests.post(url="http://86a5-105-112-56-55.ngrok.io/message", data={"From": "David"})
+    response = requests.post(url="http://7fd9-102-134-115-161.ngrok.io/message", data={"From": "David"})
     print(response.content)
