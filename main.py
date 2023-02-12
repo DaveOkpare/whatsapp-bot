@@ -21,15 +21,15 @@ app = FastAPI()
 
 def transcribe_audio(audio):
     model = whisper.load_model("base")
-    result = model.transcribe(audio)
-    return result["text"]
+    result = model.transcribe(audio, fp16=False)
+    return result
 
 
 def process_audio(url_link):
     urllib.request.urlretrieve(url_link, "audio_clip.ogg")
     sound = AudioSegment.from_file("audio_clip.ogg")
     sound.export("audio_clip.mp3", format="mp3")
-    transcribe_audio("audio_clip.mp3")
+    transcribe_audio("/Users/RichesofGod/PycharmProjects/AI/chatbot/steve.mp3")
 
 
 async def process_text():
@@ -63,4 +63,4 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 if __name__ == '__main__':
     url = "https://s3-external-1.amazonaws.com/media.twiliocdn.com/AC958a78d85d98af58c96069af329a3f94" \
           "/30f5b7ee12382cbd269b5a8ff4787166 "
-    process_audio(url)
+    print(process_audio(url))
