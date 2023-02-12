@@ -1,12 +1,15 @@
 import logging
 import os
-from typing import Union, Any, Optional
+import urllib.request
+from typing import Any, Optional
 
+import whisper
 from dotenv import load_dotenv
-from fastapi import FastAPI, Form, Response, File, Request, status
+from fastapi import FastAPI, Form, Response, Request, BackgroundTasks, status
 from fastapi.exceptions import RequestValidationError
-from twilio.rest import Client
 from fastapi.responses import JSONResponse
+from pydub import AudioSegment
+from twilio.rest import Client
 
 load_dotenv()
 
@@ -16,20 +19,36 @@ client = Client(account_sid, auth_token)
 app = FastAPI()
 
 
-@app.get("/")
-def read_root():
-    return {"Hello": "World"}
+def transcribe_audio(audio):
+    model = whisper.load_model("base")
+    result = model.transcribe(audio)
+    return result["text"]
 
 
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+def process_audio(url_link):
+    urllib.request.urlretrieve(url_link, "audio_clip.ogg")
+    sound = AudioSegment.from_file("audio_clip.ogg")
+    sound.export("audio_clip.mp3", format="mp3")
+    transcribe_audio("audio_clip.mp3")
+
+
+async def process_text():
+    pass
 
 
 @app.post("/message")
-async def chat(From: str = Form(...), Body: Optional[str] = Form(None), MediaUrl0: Optional[Any] = Form(None)):
-    msg = f"Hi {From}, you said: {Body}, with {MediaUrl0}"
+async def chat(background_tasks: BackgroundTasks,
+               From: str = Form(...),
+               Body: Optional[str] = Form(None),
+               MediaUrl0: Optional[Any] = Form(None),
+               ):
+    if MediaUrl0:
+        msg = f"Hi {From}, you said: {Body}, with {MediaUrl0}"
+    else:
+        msg = f"Hi {From}, you said: {Body}"
     print(msg)
+    string = type(MediaUrl0)
+    print(string)
     return Response(content=str(msg), media_type="application/xml")
 
 
@@ -39,3 +58,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     logging.error(f"{request}: {exc_str}")
     content = {'status_code': 10422, 'message': exc_str, 'data': None}
     return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
+
+
+if __name__ == '__main__':
+    url = "https://s3-external-1.amazonaws.com/media.twiliocdn.com/AC958a78d85d98af58c96069af329a3f94" \
+          "/30f5b7ee12382cbd269b5a8ff4787166 "
+    process_audio(url)
