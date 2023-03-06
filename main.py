@@ -25,6 +25,7 @@ FB_ACCESS_TOKEN = os.environ["FB_ACCESS_TOKEN"]
 TWILIO_ACCOUNT_SID = os.environ["TWILIO_ACCOUNT_SID"]
 TWILIO_AUTH_TOKEN = os.environ["TWILIO_AUTH_TOKEN"]
 CHATBOT_VERSION = os.getenv("CHATBOT_VERSION", "Version1")
+
 app = FastAPI()
 
 
@@ -43,7 +44,7 @@ async def process_audio(url_link, recipient, prompt=True):
 
     # Add User-Agent headers to library downloading audio
     opener = urllib.request.build_opener()
-    opener.addheaders = [("User-Agent", "Mozilla/6.0")]
+    opener.addheaders = [("User-Agent", "Mozilla/6.0")]  # noqa
     urllib.request.install_opener(opener)
 
     # Download Audio file and save it at ogg_path
@@ -88,8 +89,7 @@ async def process_text(prompt, recipient):
     if CHATBOT_VERSION == "Version2":
         # Initializes the chatbot
         chatbot = Version2(
-            email=os.environ["OPENAI_EMAIL"],
-            password=os.environ["OPENAI_PASSWORD"]
+            email=os.environ["OPENAI_EMAIL"], password=os.environ["OPENAI_PASSWORD"]
         )
 
         # Store the message response
