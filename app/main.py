@@ -64,7 +64,7 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
     """
     Messages handler.
     """
-    if data.object == "page":
+    if data.object == "whatsapp_business_account":
         for entry in data.entry:
             messaging_events = [
                 event.get("value")
