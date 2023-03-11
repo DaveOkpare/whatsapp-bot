@@ -72,8 +72,8 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
                 if event.get("value")
             ]
             for event in messaging_events:
-                message = event.get("message")[0]["text"]["body"]
-                sender_id = event["sender"][0]["from"]
+                message = event.get("messages")[0]["text"]["body"]
+                sender_id = event["messages"][0]["from"]
                 background_tasks.add_task(process_text, message, sender_id)
     return Response(content="Received a message", media_type="application/json")
 
