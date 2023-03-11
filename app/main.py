@@ -1,15 +1,21 @@
 import logging
 import os
-from typing import Any, Optional, Dict
+from typing import Any, Optional, List
 
 import uvicorn
 from fastapi import FastAPI, Form, Response, Request, BackgroundTasks, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
-from utils import process_audio, process_text
+from .utils import process_audio, process_text
 
 app = FastAPI()
+
+
+class WebhookRequestData(BaseModel):
+    object: str = ""
+    entry: List = []
 
 
 @app.post("/message")
@@ -32,13 +38,23 @@ async def chat(
 
 
 @app.post("/webhook")
-async def webhook(background_tasks: BackgroundTasks, payload: Dict):
-    data = payload["data"]
-    body = data["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
-    from_ = data["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
-    msg = f"New Message from {from_}"
-    background_tasks.add_task(process_text, body, from_)
-    return Response(content=msg, media_type="application/json")
+async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
+    if data.object == "page":
+        for entry in data.entry:
+            messaging_events = [
+                event for event in entry.get("messaging", []) if event.get("message")
+            ]
+            for event in messaging_events:
+                message = event.get("message")
+                sender_id = event["sender"]["id"]
+                background_tasks.add_task(process_text, message, sender_id)
+
+    # message = payload["data"]
+    # body = message["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
+    # from_ = message["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
+    # msg = f"New Message from {from_}"
+    # background_tasks.add_task(process_text, body, from_)
+    return Response(content="Received a message", media_type="application/json")
 
 
 @app.exception_handler(RequestValidationError)
