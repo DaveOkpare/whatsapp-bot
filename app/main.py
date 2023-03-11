@@ -15,6 +15,15 @@ app = FastAPI()
 
 load_dotenv()
 
+# setup loggers
+logging.config.fileConfig("logging.conf", disable_existing_loggers=False)
+
+# get root logger
+logger = logging.getLogger(
+    __name__
+)  # the __name__ resolve to "main" since we are at the root of the project.
+# This will get the root logger since no logger in the configuration has this name.
+
 
 class WebhookRequestData(BaseModel):
     object: str = ""
@@ -49,9 +58,8 @@ async def verify(request: Request):
     if request.query_params.get("hub.mode") == "subscribe" and request.query_params.get(
         "hub.challenge"
     ):
-        if (
-            not request.query_params.get("hub.verify_token")
-            == os.getenv("VERIFY_TOKEN")
+        if not request.query_params.get("hub.verify_token") == os.getenv(
+            "VERIFY_TOKEN"
         ):
             return Response(content="Verification token mismatch", status_code=403)
         return Response(content=request.query_params["hub.challenge"])
@@ -64,6 +72,7 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
     """
     Messages handler.
     """
+    logging.info(data)
     if data.object == "whatsapp_business_account":
         for entry in data.entry:
             messaging_events = [
