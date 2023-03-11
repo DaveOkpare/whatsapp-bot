@@ -3,6 +3,7 @@ import os
 from typing import Any, Optional, List
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import FastAPI, Form, Response, Request, BackgroundTasks, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -11,6 +12,8 @@ from pydantic import BaseModel
 from utils import process_audio, process_text
 
 app = FastAPI()
+
+load_dotenv()
 
 
 class WebhookRequestData(BaseModel):
@@ -48,7 +51,7 @@ async def verify(request: Request):
     ):
         if (
             not request.query_params.get("hub.verify_token")
-            == os.environ["VERIFY_TOKEN"]
+            == os.getenv("VERIFY_TOKEN")
         ):
             return Response(content="Verification token mismatch", status_code=403)
         return Response(content=request.query_params["hub.challenge"])
@@ -56,7 +59,7 @@ async def verify(request: Request):
     return Response(content="Required arguments haven't passed.", status_code=400)
 
 
-@app.post("/webhook")
+@app.post("/api/webhook")
 async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
     """
     Messages handler.
