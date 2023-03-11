@@ -10,16 +10,16 @@ from revChatGPT.V1 import Chatbot as Chatbot_ONE, Error
 from revChatGPT.V2 import Chatbot as Chatbot_TWO
 from twilio.rest import Client
 
+load_dotenv()
+
 CHATBOT_VERSION = os.getenv("CHATBOT_VERSION", "OPENAI")
-MESSAGING_PROVIDER = os.environ["MESSAGING_PROVIDER"]
+MESSAGING_PROVIDER = os.getenv("MESSAGING_PROVIDER", "whatsapp")
 TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 FB_BASE_URL = os.environ["FB_BASE_URL"]
 FB_VERSION = os.environ["FB_VERSION"]
 FB_PHONE_NUMBER_ID = os.environ["FB_PHONE_NUMBER_ID"]
 FB_ACCESS_TOKEN = os.environ["ACCESS_TOKEN"]
-
-load_dotenv()
 
 
 def send_message(text, recipient: str):
@@ -113,7 +113,7 @@ def openai_mirror(prompt):
     return response["choices"][0]["message"]["content"]
 
 
-def revchat_mirror(prompt):
+async def revchat_mirror(prompt):
     response = ""
     try:
         chatbot = Chatbot_ONE(
