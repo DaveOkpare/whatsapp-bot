@@ -8,7 +8,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from .utils import process_audio, process_text
+from utils import process_audio, process_text
 
 app = FastAPI()
 
@@ -37,23 +37,41 @@ async def chat(
     return Response(content=msg, media_type="application/xml")
 
 
+@app.router.get("/api/webhook")
+async def verify(request: Request):
+    """
+    On webook verification VERIFY_TOKEN has to match the token at the
+    configuration and send back "hub.challenge" as success.
+    """
+    if request.query_params.get("hub.mode") == "subscribe" and request.query_params.get(
+        "hub.challenge"
+    ):
+        if (
+            not request.query_params.get("hub.verify_token")
+            == os.environ["VERIFY_TOKEN"]
+        ):
+            return Response(content="Verification token mismatch", status_code=403)
+        return Response(content=request.query_params["hub.challenge"])
+
+    return Response(content="Required arguments haven't passed.", status_code=400)
+
+
 @app.post("/webhook")
 async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
+    """
+    Messages handler.
+    """
     if data.object == "page":
         for entry in data.entry:
             messaging_events = [
-                event for event in entry.get("messaging", []) if event.get("message")
+                event.get("value")
+                for event in entry.get("changes", [])
+                if event.get("value")
             ]
             for event in messaging_events:
-                message = event.get("message")
-                sender_id = event["sender"]["id"]
+                message = event.get("message")[0]["text"]["body"]
+                sender_id = event["sender"][0]["from"]
                 background_tasks.add_task(process_text, message, sender_id)
-
-    # message = payload["data"]
-    # body = message["entry"][0]["changes"][0]["value"]["messages"][0]["text"]["body"]
-    # from_ = message["entry"][0]["changes"][0]["value"]["messages"][0]["from"]
-    # msg = f"New Message from {from_}"
-    # background_tasks.add_task(process_text, body, from_)
     return Response(content="Received a message", media_type="application/json")
 
 
