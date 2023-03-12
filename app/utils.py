@@ -106,7 +106,7 @@ def openai_mirror(prompt):
     response = openai.ChatCompletion.create(
         model="gpt-3.5-turbo",
         messages=[
-            {"role": "system", "content": "You are a knowledgeable developer."},
+            # {"role": "system", "content": "You are a knowledgeable developer."},
             {"role": "user", "content": prompt},
         ],
     )
