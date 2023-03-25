@@ -119,7 +119,7 @@ async def process_audio(url_link, recipient, use_request=False, prompt=True):
     sound.export(mp3_path, format="mp3")
 
     # Await mp3 audio to be transcribed to text
-    response = await transcribe_audio(mp3_path)
+    response = await transcribe_audio(ogg_path)
 
     if prompt:
         # Processes the prompt
