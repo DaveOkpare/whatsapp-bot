@@ -40,6 +40,22 @@ def refresh_api_token():
     requests.get(url=url, params=params)
 
 
+def download_file(url_link, path):
+    # Use requests to download file
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {FB_ACCESS_TOKEN}",
+    }
+    response = requests.get(url_link, headers=headers)
+
+    # Write the downloaded file to disk
+    if response.status_code == 200:
+        with open(path, "wb") as f:
+            f.write(response.content)
+
+        return path
+
+
 def send_message(text, recipient: str):
     """Sends message to a phone number"""
     if MESSAGING_PROVIDER == "twilio":
@@ -87,7 +103,9 @@ async def process_audio(url_link, recipient, use_request=False, prompt=True):
     ogg_path = os.path.join(os.getcwd(), "assets/audio_clip.ogg")
     mp3_path = os.path.join(os.getcwd(), "assets/audio_clip.mp3")
 
-    if not use_request:
+    if use_request:
+        ogg_path = download_file(url_link, ogg_path)
+    else:
         # Add User-Agent headers to library downloading audio
         opener = urllib.request.build_opener()
         opener.addheaders = [("User-Agent", "Mozilla/6.0"),]  # noqa
@@ -95,17 +113,6 @@ async def process_audio(url_link, recipient, use_request=False, prompt=True):
 
         # Download Audio file and save it at ogg_path
         urllib.request.urlretrieve(url_link, ogg_path)
-    else:
-        # Use requests to download file
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {FB_ACCESS_TOKEN}",
-        }
-        response = requests.get(url_link, headers=headers)
-
-        # Write the downloaded file to disk
-        with open(ogg_path, "wb") as f:
-            f.write(response.content)
 
     # Convert ogg file to mp3
     sound = AudioSegment.from_file(ogg_path)
