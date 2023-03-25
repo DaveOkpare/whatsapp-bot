@@ -182,7 +182,7 @@ async def process_text(prompt, recipient):
 
 
 async def get_download_link(audio_id, phone_number_id, sender_id):
-    url = f"https://graph.facebook.com/v16.0/{audio_id}?phone_number_id={phone_number_id}/"
+    url = f"https://graph.facebook.com/v16.0/{audio_id}/"
     headers = {
         "Content-Type": "application/json",
         "Authorization": f"Bearer {FB_ACCESS_TOKEN}",
