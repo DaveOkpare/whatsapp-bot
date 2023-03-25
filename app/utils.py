@@ -82,24 +82,30 @@ async def transcribe_audio(audio):
     return result["text"]
 
 
-async def process_audio(url_link, recipient, add_header=False, prompt=True):
+async def process_audio(url_link, recipient, use_request=False, prompt=True):
     # Create path to store ogg and mp3 files in root directory
     ogg_path = os.path.join(os.getcwd(), "assets/audio_clip.ogg")
     mp3_path = os.path.join(os.getcwd(), "assets/audio_clip.mp3")
 
-    # Add User-Agent headers to library downloading audio
-    opener = urllib.request.build_opener()
-    opener.addheaders = [
-        ("User-Agent", "Mozilla/6.0"),
-    ]  # noqa
-    if add_header:
-        opener.addheaders.append(
-            ("Authorization", f"Bearer {FB_ACCESS_TOKEN}"),
-        )
-    urllib.request.install_opener(opener)
+    if not use_request:
+        # Add User-Agent headers to library downloading audio
+        opener = urllib.request.build_opener()
+        opener.addheaders = [("User-Agent", "Mozilla/6.0"),]  # noqa
+        urllib.request.install_opener(opener)
 
-    # Download Audio file and save it at ogg_path
-    urllib.request.urlretrieve(url_link, ogg_path)
+        # Download Audio file and save it at ogg_path
+        urllib.request.urlretrieve(url_link, ogg_path)
+    else:
+        # Use requests to download file
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {FB_ACCESS_TOKEN}",
+        }
+        response = requests.get(url_link, headers=headers)
+
+        # Write the downloaded file to disk
+        with open(ogg_path, "wb") as f:
+            f.write(response.content)
 
     # Convert ogg file to mp3
     sound = AudioSegment.from_file(ogg_path)
@@ -191,4 +197,4 @@ async def get_download_link(audio_id, phone_number_id, sender_id):
     response = response.json()
     logging.info(response)
     media_url = response["url"]
-    await process_audio(media_url, sender_id, add_header=True)
+    await process_audio(media_url, sender_id, use_request=True)
