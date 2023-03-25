@@ -1,3 +1,4 @@
+import logging
 import os
 import urllib.request
 
@@ -187,5 +188,7 @@ async def get_download_link(audio_id, phone_number_id, sender_id):
         "Authorization": f"Bearer {FB_ACCESS_TOKEN}",
     }
     response = requests.get(url=url, headers=headers)
-    media_url = response.json()["url"]
+    response = response.json()
+    logging.info(response)
+    media_url = response["url"]
     await process_audio(media_url, sender_id, add_header=True)
