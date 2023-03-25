@@ -9,7 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
-from utils import process_audio, process_text
+from utils import process_audio, process_text, get_download_link
 
 app = FastAPI()
 
@@ -81,9 +81,19 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
                 if event.get("value")
             ]
             for event in messaging_events:
-                message = event.get("messages")[0]["text"]["body"]
-                sender_id = event["messages"][0]["from"]
-                background_tasks.add_task(process_text, message, sender_id)
+                message = event.get("messages")[0]
+                sender_id = message["from"]
+                phone_number_id = event.get("metadata")["phone_number_id"]
+
+                if message.get("text"):
+                    message = message["text"]["body"]
+                    background_tasks.add_task(process_text, message, sender_id)
+
+                elif message.get("audio"):
+                    audio_id = message["audio"]["id"]
+                    background_tasks.add_task(
+                        get_download_link, audio_id, phone_number_id, sender_id
+                    )
     return Response(content="Received a message", media_type="application/json")
 
 

@@ -22,6 +22,23 @@ FB_PHONE_NUMBER_ID = os.environ["FB_PHONE_NUMBER_ID"]
 FB_ACCESS_TOKEN = os.environ["ACCESS_TOKEN"]
 
 
+def refresh_api_token():
+    """
+    "https://graph.facebook.com/oauth/access_token?grant_type=fb_exchange_token&
+      client_id="APP-ID"&
+      client_secret="APP-SECRET"&
+      fb_exchange_token="SHORT-LIVED-USER-ACCESS-TOKEN"
+    :return:
+    """
+    url = "https://graph.facebook.com/oauth/access_token?"
+    params = dict(
+        client_id="APP-ID",
+        client_secret="APP-SECRET",
+        fb_exchange_token="SHORT-LIVED-USER-ACCESS-TOKEN",
+    )
+    requests.get(url=url, params=params)
+
+
 def send_message(text, recipient: str):
     """Sends message to a phone number"""
     if MESSAGING_PROVIDER == "twilio":
@@ -64,14 +81,20 @@ async def transcribe_audio(audio):
     return result["text"]
 
 
-async def process_audio(url_link, recipient, prompt=True):
+async def process_audio(url_link, recipient, add_header=False, prompt=True):
     # Create path to store ogg and mp3 files in root directory
     ogg_path = os.path.join(os.getcwd(), "assets/audio_clip.ogg")
     mp3_path = os.path.join(os.getcwd(), "assets/audio_clip.mp3")
 
     # Add User-Agent headers to library downloading audio
     opener = urllib.request.build_opener()
-    opener.addheaders = [("User-Agent", "Mozilla/6.0")]  # noqa
+    opener.addheaders = [
+        ("User-Agent", "Mozilla/6.0"),
+    ]  # noqa
+    if add_header:
+        opener.addheaders.append(
+            ("Authorization", f"Bearer {FB_ACCESS_TOKEN}"),
+        )
     urllib.request.install_opener(opener)
 
     # Download Audio file and save it at ogg_path
@@ -155,3 +178,14 @@ async def process_text(prompt, recipient):
         send_message(text, recipient)
 
     return response
+
+
+async def get_download_link(audio_id, phone_number_id, sender_id):
+    url = f"https://graph.facebook.com/v16.0/{audio_id}?phone_number_id={phone_number_id}/"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {FB_ACCESS_TOKEN}",
+    }
+    response = requests.get(url=url, headers=headers)
+    media_url = response.json()["url"]
+    await process_audio(media_url, sender_id, add_header=True)
