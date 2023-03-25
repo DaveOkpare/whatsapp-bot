@@ -115,8 +115,8 @@ async def process_audio(url_link, recipient, use_request=False, prompt=True):
         urllib.request.urlretrieve(url_link, ogg_path)
 
     # Convert ogg file to mp3
-    sound = AudioSegment.from_file(ogg_path)
-    sound.export(mp3_path, format="mp3")
+    # sound = AudioSegment.from_file(ogg_path)
+    # sound.export(mp3_path, format="mp3")
 
     # Await mp3 audio to be transcribed to text
     response = await transcribe_audio(ogg_path)
