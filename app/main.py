@@ -91,9 +91,7 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
 
                 elif message.get("audio"):
                     audio_id = message["audio"]["id"]
-                    background_tasks.add_task(
-                        get_download_link, audio_id, phone_number_id, sender_id
-                    )
+                    background_tasks.add_task(get_download_link, audio_id, sender_id)
     return Response(content="Received a message", media_type="application/json")
 
 

@@ -1,7 +1,7 @@
 fastapi==0.94.0
 ffmpeg==1.4
 ffmpeg-python==0.2.0
-openai-whisper==20230308
+openai-whisper==20230314
 pyngrok==5.2.1
 python-dotenv==1.0.0
 python-multipart==0.0.6
