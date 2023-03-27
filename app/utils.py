@@ -5,7 +5,7 @@ import requests
 import torch
 import whisper
 from dotenv import load_dotenv
-from pydub import AudioSegment
+from faster_whisper import WhisperModel
 from revChatGPT.V1 import Chatbot as Chatbot_ONE, Error
 from revChatGPT.V2 import Chatbot as Chatbot_TWO
 from twilio.rest import Client
@@ -97,6 +97,30 @@ async def transcribe_audio(audio):
     return result["text"]
 
 
+async def faster_transcribe_audio(audio):
+    model_size = "large-v2"
+
+    # Run on GPU with FP16
+    # model = WhisperModel(model_size, device="cuda", compute_type="float16")
+
+    # or run on GPU with INT8
+    # model = WhisperModel(model_size, device="cuda", compute_type="int8_float16")
+    # or run on CPU with INT8
+    model = WhisperModel(model_size, device="cpu", compute_type="int8")
+
+    segments, info = model.transcribe(audio, beam_size=5)
+
+    logging.info("Detected language '%s' with probability %f" % (info.language, info.language_probability))
+
+    output = ""
+
+    for segment in segments:
+        logging.info("[%.2fs -> %.2fs] %s" % (segment.start, segment.end, segment.text))
+        output += segment.text
+
+    return output
+
+
 async def process_audio(url_link, recipient, prompt=True):
     # Create path to store ogg and mp3 files in root directory
     ogg_path = os.path.join(os.getcwd(), "assets/audio_clip.ogg")
@@ -113,11 +137,11 @@ async def process_audio(url_link, recipient, prompt=True):
     #     urllib.request.urlretrieve(url_link, ogg_path)
 
     # Convert ogg file to mp3
-    sound = AudioSegment.from_file(ogg_path)
-    sound.export(mp3_path, format="mp3")
+    # sound = AudioSegment.from_file(ogg_path)
+    # sound.export(mp3_path, format="mp3")
 
     # Await mp3 audio to be transcribed to text
-    response = await transcribe_audio(ogg_path)
+    response = await faster_transcribe_audio(ogg_path)
 
     if prompt:
         # Processes the prompt
