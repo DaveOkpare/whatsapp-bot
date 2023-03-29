@@ -62,7 +62,7 @@ def send_message(text, recipient: str, messaging_provider: str):
         message = client.messages.create(
             from_=f'whatsapp:{os.getenv("FROM_WHATSAPP")}',
             body=text,
-            to=f"whatsapp:+2347015593286",
+            to=f"whatsapp:{recipient}",
         )
 
         sid = message.sid
