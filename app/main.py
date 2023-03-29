@@ -38,14 +38,15 @@ async def chat(
     MediaUrl0: Optional[Any] = Form(None),
 ):
     """Twilio Webhook"""
+    messaging_provider = "twilio"
     if MediaUrl0:
         print(MediaUrl0)
         msg = f"New Audio Message from {From}"
-        background_tasks.add_task(process_audio, MediaUrl0, From)
+        background_tasks.add_task(process_audio, MediaUrl0, From, messaging_provider)
     else:
         print(Body)
         msg = f"New Message from {From}"
-        background_tasks.add_task(process_text, Body, From)
+        background_tasks.add_task(process_text, Body, From, messaging_provider)
     return Response(content=msg, media_type="application/xml")
 
 
@@ -73,6 +74,7 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
     Messages handler.
     """
     logging.info(data)
+    messaging_provider = "whatsapp"
     if data.object == "whatsapp_business_account":
         for entry in data.entry:
             messaging_events = [
@@ -87,7 +89,7 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
 
                 if message.get("text"):
                     message = message["text"]["body"]
-                    background_tasks.add_task(process_text, message, sender_id)
+                    background_tasks.add_task(process_text, message, sender_id, messaging_provider)
 
                 elif message.get("audio"):
                     audio_id = message["audio"]["id"]

@@ -55,9 +55,9 @@ async def download_file(url_link, path):
         return path
 
 
-def send_message(text, recipient: str):
+def send_message(text, recipient: str, messaging_provider: str):
     """Sends message to a phone number"""
-    if MESSAGING_PROVIDER == "twilio":
+    if messaging_provider == "twilio":
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
         message = client.messages.create(
             from_=f'whatsapp:{os.getenv("FROM_WHATSAPP")}',
@@ -68,7 +68,7 @@ def send_message(text, recipient: str):
         sid = message.sid
         return sid
 
-    elif MESSAGING_PROVIDER == "whatsapp":
+    elif messaging_provider == "whatsapp":
         url = f"{FB_BASE_URL}/{FB_VERSION}/{FB_PHONE_NUMBER_ID}/messages"
         headers = {
             "Content-Type": "application/json",
@@ -121,7 +121,7 @@ async def faster_transcribe_audio(audio):
     return output
 
 
-async def process_audio(url_link, recipient, prompt=True):
+async def process_audio(url_link, recipient, messaging_provider, prompt=True):
     # Create path to store ogg and mp3 files in root directory
     ogg_path = os.path.join(os.getcwd(), "assets/audio_clip.ogg")
     mp3_path = os.path.join(os.getcwd(), "assets/audio_clip.mp3")
@@ -145,10 +145,10 @@ async def process_audio(url_link, recipient, prompt=True):
 
     if prompt:
         # Processes the prompt
-        response = await process_text(response, recipient)
+        response = await process_text(response, recipient, messaging_provider)
     else:
         # Send transcribed audio
-        send_message(response, recipient)
+        send_message(response, recipient, messaging_provider)
 
     # Deletes files from root directory after use
     [os.remove(path) for path in (mp3_path, ogg_path)]
@@ -194,7 +194,7 @@ async def revchat_mirror(prompt):
         return response
 
 
-async def process_text(prompt, recipient):
+async def process_text(prompt, recipient, messaging_provider):
     # Initializes the chatbot
     if CHATBOT_VERSION == "revchat":
         response = revchat_mirror(prompt)
@@ -211,7 +211,7 @@ async def process_text(prompt, recipient):
     )
 
     for text in messages:
-        send_message(text, recipient)
+        send_message(text, recipient, messaging_provider)
 
     return response
 
@@ -226,4 +226,5 @@ async def get_download_link(audio_id, sender_id):
     response = response.json()
     logging.info(response)
     media_url = response["url"]
-    await process_audio(media_url, sender_id)
+    messaging_provider = "whatsapp"
+    await process_audio(media_url, sender_id, messaging_provider)
