@@ -1,5 +1,6 @@
 import logging
 import os
+import urllib
 
 import requests
 import torch
@@ -126,15 +127,16 @@ async def process_audio(url_link, recipient, messaging_provider, prompt=True):
     ogg_path = os.path.join(os.getcwd(), "assets/audio_clip.ogg")
     mp3_path = os.path.join(os.getcwd(), "assets/audio_clip.mp3")
 
-    ogg_path = await download_file(url_link, ogg_path)
-    # else:
-    #     # Add User-Agent headers to library downloading audio
-    #     opener = urllib.request.build_opener()
-    #     opener.addheaders = [("User-Agent", "Mozilla/6.0"),]  # noqa
-    #     urllib.request.install_opener(opener)
-    #
-    #     # Download Audio file and save it at ogg_path
-    #     urllib.request.urlretrieve(url_link, ogg_path)
+    if messaging_provider == "whatsapp":
+        ogg_path = await download_file(url_link, ogg_path)
+    else:
+        # Add User-Agent headers to library downloading audio
+        opener = urllib.request.build_opener()
+        opener.addheaders = [("User-Agent", "Mozilla/6.0"),]  # noqa
+        urllib.request.install_opener(opener)
+
+        # Download Audio file and save it at ogg_path
+        urllib.request.urlretrieve(url_link, ogg_path)
 
     # Convert ogg file to mp3
     # sound = AudioSegment.from_file(ogg_path)
