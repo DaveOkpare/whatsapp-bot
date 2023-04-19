@@ -8,6 +8,7 @@ from fastapi import FastAPI, Form, Response, Request, BackgroundTasks, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+import requests
 
 from utils import process_audio, process_text, get_download_link
 
@@ -89,7 +90,9 @@ async def webhook(background_tasks: BackgroundTasks, data: WebhookRequestData):
 
                 if message.get("text"):
                     message = message["text"]["body"]
-                    background_tasks.add_task(process_text, message, sender_id, messaging_provider)
+                    background_tasks.add_task(
+                        process_text, message, sender_id, messaging_provider
+                    )
 
                 elif message.get("audio"):
                     audio_id = message["audio"]["id"]
@@ -106,6 +109,23 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     return JSONResponse(
         content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY
     )
+
+
+@app.get("/david")
+async def david(request: Request):
+    # Extract the IP address from the request headers
+    ip_address = request.headers.get("X-Forwarded-For", request.remote_addr)
+
+    # Make a request to the geolocation API
+    response = requests.get(f"https://ipinfo.io/{ip_address}")
+
+    # Parse the JSON response to retrieve the country and location data
+    data = response.json()
+    country = data.get("country")
+    loc = data.get("loc")
+
+    # Return the location data as a JSON response
+    return {"ip_address": ip_address, "country": country, "location": loc}
 
 
 if __name__ == "__main__":
