@@ -114,7 +114,7 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 @app.get("/david")
 async def david(request: Request):
     # Extract the IP address from the request headers
-    ip_address = request.headers.get("X-Forwarded-For", request.remote_addr)
+    ip_address = request.headers.get("X-Forwarded-For", request.client.host)
 
     # Make a request to the geolocation API
     response = requests.get(f"https://ipinfo.io/{ip_address}")
